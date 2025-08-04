@@ -26,7 +26,7 @@ export default function ForgotPassword() {
     e.preventDefault();
     setMessage("");
     try {
-      const res = await axios.post("http://localhost:8000/api/forgot-password", { email });
+      const res = await axios.post("https://colleborativetasklist.onrender.com/api/forgot-password", { email });
       setMessage(res.data.message);
     } catch (err) {
       setMessage(err.response?.data?.message || "Error sending email");

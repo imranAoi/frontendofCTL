@@ -21,7 +21,7 @@ export default function Dashboard() {
   const [dueDate, setDueDate] = useState(null);
   const [priority, setPriority] = useState(null);
   const [reminder, setReminder] = useState(null);
-  const NEXT_PUBLIC_BASE_URL = "http://localhost:8000/api";
+  const NEXT_PUBLIC_BASE_URL = "https://colleborativetasklist.onrender.com/api";
   const dummyUsers = ["Alice", "Bob", "Charlie", "David", "Eve"];
   const tabs = [
     { name: "Inbox", badge: tasks.length },

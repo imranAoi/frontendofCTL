@@ -33,7 +33,7 @@ export default function Page({ params }) {
     }
 
     try {
-      const res = await axios.post(`http://localhost:8000/api/reset-password/${token}`, { password });
+      const res = await axios.post(`https://colleborativetasklist.onrender.com/api/reset-password/${token}`, { password });
       setMessage(res.data.message);
       setTimeout(() => {
         router.push("/login");

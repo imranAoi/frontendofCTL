@@ -83,7 +83,7 @@ const AuthCard = () => {
         hasCompletedOnboarding: false
       };
 
-      const res = await axios.post("http://localhost:8000/api/google-login", userData);
+      const res = await axios.post("https://colleborativetasklist.onrender.com/api/google-login", userData);
 
       login(res.data.user, res.data.token);
       router.push(`/dashboard/user/${res.data.user._id || res.data.user.uid}`);
