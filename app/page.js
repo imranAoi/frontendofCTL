@@ -1,3 +1,4 @@
+'use client'
 import Header from "../components/Header/Header";
 import Hero from "../components/Home/Hero";
 import ProtectedRoute from "../components/ProtectedRoute";

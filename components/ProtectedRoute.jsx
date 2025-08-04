@@ -22,11 +22,7 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  if (!isAuthenticated()) {
-    return null; // Will redirect to login
-  }
-
   return children;
 };
 
-export default ProtectedRoute; 
+export default ProtectedRoute;

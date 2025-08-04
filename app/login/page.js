@@ -1,12 +1,12 @@
 'use client';
-import { auth,facebookProvider,googleProvider, signInWithPopup } from "../../config/firebaseConfig";
+import { auth, facebookProvider, googleProvider, signInWithPopup } from "../../config/firebaseConfig";
 import { useState, useEffect } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook, FaEye, FaEyeSlash } from "react-icons/fa";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { loginUser, signupUser } from "../../components/api/Authapi";
-import Link from 'next/link'
+import Link from 'next/link';
 import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
 import { useRouter } from "next/navigation";
@@ -16,84 +16,30 @@ const AuthCard = () => {
   const { login, isAuthenticated } = useAuth();
   const router = useRouter();
 
-  const [loginData, setLoginData] = useState({
-    email: "",
-    password: "",
-  });
-
-  const [signupData, setSignupData] = useState({
-    name: "",
-    email: "",
-    password: "",
-  });
-
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const [signupData, setSignupData] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
   const [showPassword, setShowPassword] = useState(false);
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated()) {
-      router.push('/dashboard');
+      // Skip this if already on user route
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (user?._id || user?.uid) {
+        router.push(`/dashboard/user/${user._id || user.uid}`);
+      }
     }
   }, [isAuthenticated, router]);
 
   const handleLoginChange = (e) => {
     const { name, value } = e.target;
-    setLoginData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setLoginData(prev => ({ ...prev, [name]: value }));
   };
-
-const handleGoogleAuth = async () => {
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-    const user = result.user;
-    console.log("Google Login Success:", user);
-      const userData = {
-  name: user.displayName,
-  email: user.email,
-  firebaseUid: user.uid,
-  photo: user.photoURL,
-  provider: "google",
-  hasCompletedOnboarding: false // New users need onboarding
-};
-
-  const res = await axios.post("http://localhost:8000/api/google-login", userData);
-  console.log("Backend login/signup success:", res.data);
-  
-  // Use the auth context to login
-  login(userData, res.data.token);
-  router.push('/dashboard');
-
-  } catch (err) {
-    console.error("Google Login Error:", err);
-    setError(err.message || "Google login failed");
-  }
-};
-
-const handleFacebookAuth = async () => {
-  try {
-    const result = await signInWithPopup(auth, facebookProvider);
-    const user = result.user;
-    console.log("Facebook Login Success:", user);
-
-    // OPTIONAL: send user info to your backend to create/login user and return JWT
-  } catch (err) {
-    console.error("Facebook Login Error:", err);
-    setError(err.message || "Facebook login failed");
-  }
-};
-
 
   const handleSignupChange = (e) => {
     const { name, value } = e.target;
-    setSignupData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setSignupData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -104,36 +50,57 @@ const handleFacebookAuth = async () => {
     try {
       if (isLogin) {
         const res = await loginUser(loginData.email, loginData.password);
-        console.log("Login Success:", res);
-        
-        // For existing users, check if they have completed onboarding
-        const userData = {
-          ...res.user,
-          hasCompletedOnboarding: res.user.hasCompletedOnboarding || false
-        };
-        
-        // Use the auth context to login
+        const userData = { ...res.user, hasCompletedOnboarding: res.user.hasCompletedOnboarding || false };
+
         login(userData, res.token);
-        router.push('/dashboard');
+        router.push(`/dashboard/user/${res.user._id || res.user.uid}`);
       } else {
         const res = await signupUser(signupData.name, signupData.email, signupData.password);
-        console.log("Signup Success:", res);
-        
-        // For new users, set hasCompletedOnboarding to false
-        const userData = {
-          ...res.user,
-          hasCompletedOnboarding: false
-        };
-        
-        // Use the auth context to login after signup
+        const userData = { ...res.user, hasCompletedOnboarding: false };
+
         login(userData, res.token);
-        router.push('/dashboard');
+        router.push(`/dashboard/user/${res.user._id || res.user.uid}`);
       }
     } catch (err) {
       console.error("Auth Error:", err);
       setError(err.message || "Something went wrong");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      const userData = {
+        name: user.displayName,
+        email: user.email,
+        firebaseUid: user.uid,
+        photo: user.photoURL,
+        provider: "google",
+        hasCompletedOnboarding: false
+      };
+
+      const res = await axios.post("http://localhost:8000/api/google-login", userData);
+
+      login(res.data.user, res.data.token);
+      router.push(`/dashboard/user/${res.data.user._id || res.data.user.uid}`);
+    } catch (err) {
+      console.error("Google Login Error:", err);
+      setError(err.message || "Google login failed");
+    }
+  };
+
+  const handleFacebookAuth = async () => {
+    try {
+      const result = await signInWithPopup(auth, facebookProvider);
+      const user = result.user;
+      // TODO: Send to backend and handle token
+    } catch (err) {
+      console.error("Facebook Login Error:", err);
+      setError(err.message || "Facebook login failed");
     }
   };
 
@@ -155,9 +122,7 @@ const handleFacebookAuth = async () => {
           {isLogin ? "Login" : "Sign Up"}
         </h2>
 
-        {error && (
-          <p className="text-red-500 text-center mb-2 text-sm">{error}</p>
-        )}
+        {error && <p className="text-red-500 text-center mb-2 text-sm">{error}</p>}
 
         <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
           {!isLogin && (
@@ -197,9 +162,9 @@ const handleFacebookAuth = async () => {
 
           {isLogin && (
             <Link href="/forget">
-            <p className="text-right text-sm text-blue-500 hover:underline cursor-pointer">
-              Forgot Password?
-            </p>
+              <p className="text-right text-sm text-blue-500 hover:underline cursor-pointer">
+                Forgot Password?
+              </p>
             </Link>
           )}
 

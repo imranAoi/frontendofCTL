@@ -6,13 +6,15 @@ import { useAuth } from "../../contexts/AuthContext";
 export default function Header() {
   const { user, logout, isAuthenticated } = useAuth();
 
+  const userId = user?._id || user?.uid;
+
   return (
     <header className="sticky top-0 z-50 bg-white flex items-center justify-between px-8 py-4 border-b shadow-sm">
       <div className="flex items-center space-x-4">
         <Link href="/" className="text-xl font-bold">todoist</Link>
         {isAuthenticated() && (
           <nav className="hidden md:flex gap-1 space-x-2 text-gray-600">
-            <Link href="/dashboard">Dashboard</Link>
+            <Link href={`/dashboard/user/${userId}`}>Dashboard</Link>
             <Link href="#">Tasks</Link>
             <Link href="#">Projects</Link>
           </nav>

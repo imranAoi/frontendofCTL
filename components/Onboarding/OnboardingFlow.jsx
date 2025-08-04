@@ -19,7 +19,7 @@ const OnboardingFlow = () => {
   });
   const [loading, setLoading] = useState(false);
 
-  // Dynamically build steps based on usageType
+  
   const getSteps = () => {
     const baseSteps = [
       {
@@ -81,29 +81,39 @@ const OnboardingFlow = () => {
     }
   };
 
-  const completeOnboarding = async () => {
-    setLoading(true);
-    try {
-      // Update user profile with onboarding data
-      const updatedUser = {
-        ...user,
-        displayName: formData.displayName,
-        usageType: formData.usageType,
-        hasCompletedOnboarding: true
-      };
+const completeOnboarding = async () => {
+  setLoading(true);
+  try {
+    const updatedUser = {
+      ...user,
+      displayName: formData.displayName,
+      usageType: formData.usageType,
+      hasCompletedOnboarding: true
+    };
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/save-onboarding`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${localStorage.getItem('token')}`, // if needed
+  },
+  body: JSON.stringify({
+    displayName: formData.displayName,
+    usageType: formData.usageType,
+    projectName: formData.projectName,
+    userId: user._id || user.uid,
+  }),
+});
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    login(updatedUser, localStorage.getItem('token'));
+    const userId = updatedUser._id || updatedUser.uid;
+    router.push(`/dashboard/user/${userId}`);
+  } catch (error) {
+    console.error('Error completing onboarding:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
-      // Update localStorage and context
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      login(updatedUser, localStorage.getItem('token'));
-
-      // Navigate to dashboard
-      router.push('/dashboard');
-    } catch (error) {
-      console.error('Error completing onboarding:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const CurrentStepComponent = steps[currentStep - 1].component;
 

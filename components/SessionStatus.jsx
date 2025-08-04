@@ -56,12 +56,7 @@ const SessionStatus = () => {
     <div className="fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-lg border max-w-sm">
       <h3 className="font-semibold text-sm mb-2">Session Status</h3>
       
-      <div className="text-xs space-y-1 mb-3">
-        <p><strong>User:</strong> {user?.name || user?.email}</p>
-        <p><strong>Token:</strong> {localStorage.getItem('token') ? '✅ Stored' : '❌ Missing'}</p>
-        <p><strong>Cookie:</strong> {document.cookie.includes('token=') ? '✅ Set' : '❌ Missing'}</p>
-        <p><strong>Session:</strong> {user ? '✅ Active' : '❌ Inactive'}</p>
-      </div>
+    
 
       {sessionStatus && (
         <p className="text-xs mb-2 p-2 bg-gray-100 rounded">
