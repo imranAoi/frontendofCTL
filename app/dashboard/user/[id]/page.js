@@ -21,7 +21,10 @@ export default function Dashboard() {
   const [dueDate, setDueDate] = useState(null);
   const [priority, setPriority] = useState(null);
   const [reminder, setReminder] = useState(null);
+  
+  // ✅ Always point to backend domain
   const NEXT_PUBLIC_BASE_URL = "https://colleborativetasklist.onrender.com/api";
+
   const dummyUsers = ["Alice", "Bob", "Charlie", "David", "Eve"];
   const tabs = [
     { name: "Inbox", badge: tasks.length },
@@ -39,16 +42,16 @@ export default function Dashboard() {
     try {
       const res = await fetch(`${NEXT_PUBLIC_BASE_URL}/tasks`, {
         method: "GET",
-        credentials: "include",
+        credentials: "include", // ✅ Send cookies
       });
       const data = await res.json();
       if (Array.isArray(data)) {
-  const validTasks = data.filter(task => task && task._id);
-  setTasks(validTasks);
-} else {
-  console.warn("Unexpected tasks format:", data);
-  setTasks([]);
-}
+        const validTasks = data.filter(task => task && task._id);
+        setTasks(validTasks);
+      } else {
+        console.warn("Unexpected tasks format:", data);
+        setTasks([]);
+      }
     } catch (error) {
       console.error("Error fetching tasks", error);
       setTasks([]);
@@ -64,7 +67,7 @@ export default function Dashboard() {
     try {
       const res = await fetch(`${NEXT_PUBLIC_BASE_URL}/tasks`, {
         method: "POST",
-        credentials: "include",
+        credentials: "include", // ✅ Send cookies
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -76,9 +79,9 @@ export default function Dashboard() {
       }
 
       const newTask = await res.json();
-      if (!Array.isArray(tasks)) setTasks([newTask]);
-      else setTasks([...tasks, newTask]);
+      setTasks(prev => [...prev, newTask]);
 
+      // Reset fields
       setTaskTitle("");
       setDueDate(null);
       setPriority(null);
@@ -107,26 +110,24 @@ export default function Dashboard() {
     }
   };
 
-const handleDeleteTask = async (taskId) => {
-  try {
-    const res = await fetch(`${NEXT_PUBLIC_BASE_URL}/tasks/${taskId}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+  const handleDeleteTask = async (taskId) => {
+    try {
+      const res = await fetch(`${NEXT_PUBLIC_BASE_URL}/tasks/${taskId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
-    if (!res.ok) {
-      let errorText = await res.text(); // Try to read plain response
-      console.warn("Failed to delete on server:", errorText);
-      return;
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.warn("Failed to delete on server:", errorText);
+        return;
+      }
+
+      await fetchTasks(); // Refresh list
+    } catch (error) {
+      console.error("Error deleting task", error);
     }
-
-    await fetchTasks(); // Re-fetch latest state
-  } catch (error) {
-    console.error("Error deleting task", error);
-  }
-};
-
-
+  };
 
   const handleUpdatePriority = async (taskId, newPriority) => {
     try {

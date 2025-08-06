@@ -1,19 +1,16 @@
 'use client';
 import { auth, facebookProvider, googleProvider, signInWithPopup } from "../../config/firebaseConfig";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook, FaEye, FaEyeSlash } from "react-icons/fa";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
-import { loginUser, signupUser } from "../../components/api/Authapi";
 import Link from 'next/link';
 import axios from "axios";
-import { useAuth } from "../../contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
 const AuthCard = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const { login, isAuthenticated } = useAuth();
   const router = useRouter();
 
   const [loginData, setLoginData] = useState({ email: "", password: "" });
@@ -21,16 +18,6 @@ const AuthCard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
-  useEffect(() => {
-    if (isAuthenticated()) {
-      // Skip this if already on user route
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (user?._id || user?.uid) {
-        router.push(`/dashboard/user/${user._id || user.uid}`);
-      }
-    }
-  }, [isAuthenticated, router]);
 
   const handleLoginChange = (e) => {
     const { name, value } = e.target;
@@ -49,18 +36,26 @@ const AuthCard = () => {
 
     try {
       if (isLogin) {
-        const res = await loginUser(loginData.email, loginData.password);
-        const userData = { ...res.user, hasCompletedOnboarding: res.user.hasCompletedOnboarding || false };
-
-        login(userData, res.token);
-        router.push(`/dashboard/user/${res.user._id || res.user.uid}`);
+        await fetch("https://colleborativetasklist.onrender.com/api/login", {
+          method: "POST",
+          credentials: "include", // Send cookies
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(loginData),
+        });
       } else {
-        const res = await signupUser(signupData.name, signupData.email, signupData.password);
-        const userData = { ...res.user, hasCompletedOnboarding: false };
-
-        login(userData, res.token);
-        router.push(`/dashboard/user/${res.user._id || res.user.uid}`);
+        await fetch("https://colleborativetasklist.onrender.com/api/signup", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(signupData),
+        });
       }
+
+      router.push("/dashboard");
     } catch (err) {
       console.error("Auth Error:", err);
       setError(err.message || "Something went wrong");
@@ -80,13 +75,13 @@ const AuthCard = () => {
         firebaseUid: user.uid,
         photo: user.photoURL,
         provider: "google",
-        hasCompletedOnboarding: false
       };
 
-      const res = await axios.post("https://colleborativetasklist.onrender.com/api/google-login", userData);
+      await axios.post("https://colleborativetasklist.onrender.com/api/google-login", userData, {
+        withCredentials: true, // Send cookies
+      });
 
-      login(res.data.user, res.data.token);
-      router.push(`/dashboard/user/${res.data.user._id || res.data.user.uid}`);
+      router.push("/dashboard");
     } catch (err) {
       console.error("Google Login Error:", err);
       setError(err.message || "Google login failed");
@@ -96,8 +91,7 @@ const AuthCard = () => {
   const handleFacebookAuth = async () => {
     try {
       const result = await signInWithPopup(auth, facebookProvider);
-      const user = result.user;
-      // TODO: Send to backend and handle token
+      console.log("Facebook user:", result.user);
     } catch (err) {
       console.error("Facebook Login Error:", err);
       setError(err.message || "Facebook login failed");
